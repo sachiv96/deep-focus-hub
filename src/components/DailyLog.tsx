@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { format } from 'date-fns';
-import { Plus, Trash2 } from 'lucide-react';
+import { format, addDays, subDays } from 'date-fns';
+import { Plus, Trash2, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { StudySession, EnergyLevel } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,13 +8,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 interface DailyLogProps {
   sessions: StudySession[];
+  selectedDate: string;
+  onDateChange: (date: string) => void;
   onAddSession: (session: Omit<StudySession, 'id' | 'durationMinutes'>) => void;
   onDeleteSession: (id: string) => void;
   dailyTotal: number;
 }
 
-export function DailyLog({ sessions, onAddSession, onDeleteSession, dailyTotal }: DailyLogProps) {
-  const today = format(new Date(), 'yyyy-MM-dd');
+export function DailyLog({ sessions, selectedDate, onDateChange, onAddSession, onDeleteSession, dailyTotal }: DailyLogProps) {
   const [subject, setSubject] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
@@ -23,12 +24,13 @@ export function DailyLog({ sessions, onAddSession, onDeleteSession, dailyTotal }
   const [energyLevel, setEnergyLevel] = useState<EnergyLevel>('medium');
   const [notes, setNotes] = useState('');
 
-  const todaySessions = sessions.filter(s => s.date === today);
+  const daySessions = sessions.filter(s => s.date === selectedDate);
+  const isToday = selectedDate === format(new Date(), 'yyyy-MM-dd');
 
   const handleAdd = () => {
     if (!subject || !startTime || !endTime) return;
     onAddSession({
-      date: today,
+      date: selectedDate,
       subject,
       startTime,
       endTime,
@@ -44,6 +46,11 @@ export function DailyLog({ sessions, onAddSession, onDeleteSession, dailyTotal }
     setDistractionCount('0');
   };
 
+  const navigateDate = (dir: number) => {
+    const d = dir > 0 ? addDays(new Date(selectedDate), 1) : subDays(new Date(selectedDate), 1);
+    onDateChange(format(d, 'yyyy-MM-dd'));
+  };
+
   const getEnergyColor = (level: EnergyLevel) => {
     switch (level) {
       case 'high': return 'text-success';
@@ -52,36 +59,74 @@ export function DailyLog({ sessions, onAddSession, onDeleteSession, dailyTotal }
     }
   };
 
+  const totalMinutes = daySessions.reduce((s, sess) => s + sess.durationMinutes, 0);
+
   return (
     <div className="space-y-6">
+      {/* Date Navigation */}
+      <div className="glass-card p-4 flex items-center justify-between">
+        <button onClick={() => navigateDate(-1)} className="p-2 rounded-lg hover:bg-muted transition-colors">
+          <ChevronLeft className="w-5 h-5 text-muted-foreground" />
+        </button>
+        <div className="flex items-center gap-3">
+          <Calendar className="w-4 h-4 text-primary" />
+          <div className="text-center">
+            <h2 className="font-semibold">
+              {isToday ? 'Today' : format(new Date(selectedDate), 'EEEE')} — {format(new Date(selectedDate), 'MMM d, yyyy')}
+            </h2>
+          </div>
+          {!isToday && (
+            <button
+              onClick={() => onDateChange(format(new Date(), 'yyyy-MM-dd'))}
+              className="text-xs text-primary hover:underline ml-2"
+            >
+              Go to Today
+            </button>
+          )}
+        </div>
+        <button onClick={() => navigateDate(1)} className="p-2 rounded-lg hover:bg-muted transition-colors">
+          <ChevronRight className="w-5 h-5 text-muted-foreground" />
+        </button>
+      </div>
+
       {/* Today's Summary */}
       <div className="glass-card p-6">
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-lg font-semibold">Today — {format(new Date(), 'EEEE, MMM d')}</h2>
-          <div className="flex items-center gap-2">
-            <span className="text-muted-foreground text-sm">Real Study:</span>
-            <span className={`stat-value text-2xl ${dailyTotal >= 8 ? 'text-success' : dailyTotal >= 5 ? 'text-primary' : 'text-destructive'}`}>
-              {dailyTotal}h
-            </span>
+          <div>
+            <p className="text-sm text-muted-foreground">{daySessions.length} session{daySessions.length !== 1 ? 's' : ''} logged</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="text-right">
+              <span className="text-xs text-muted-foreground block">Real Study</span>
+              <span className={`stat-value text-2xl ${dailyTotal >= 8 ? 'text-success' : dailyTotal >= 5 ? 'text-primary' : dailyTotal > 0 ? 'text-warning' : 'text-muted-foreground'}`}>
+                {Math.floor(totalMinutes / 60)}h {totalMinutes % 60}m
+              </span>
+            </div>
           </div>
         </div>
-        <div className="w-full bg-muted rounded-full h-2 mt-3">
+        <div className="w-full bg-muted rounded-full h-2.5 mt-3">
           <div
-            className="h-2 rounded-full transition-all duration-500"
+            className="h-2.5 rounded-full transition-all duration-700 ease-out"
             style={{
               width: `${Math.min((dailyTotal / 10) * 100, 100)}%`,
-              background: `linear-gradient(90deg, hsl(var(--primary)), hsl(var(--success)))`,
+              background: dailyTotal >= 8
+                ? 'hsl(var(--success))'
+                : dailyTotal >= 5
+                  ? 'linear-gradient(90deg, hsl(var(--primary)), hsl(var(--success)))'
+                  : 'hsl(var(--primary))',
             }}
           />
         </div>
-        <div className="flex justify-between text-xs text-muted-foreground mt-1">
-          <span>0h</span><span>5h</span><span>10h</span>
+        <div className="flex justify-between text-xs text-muted-foreground mt-1.5">
+          <span>0h</span>
+          <span className="text-primary font-medium">Target: 5-10h</span>
+          <span>10h</span>
         </div>
       </div>
 
       {/* Add Session Form */}
       <div className="glass-card p-6 space-y-4">
-        <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Log Study Session</h3>
+        <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Log Deep Work Session</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <Input
             placeholder="Subject / Task"
@@ -89,18 +134,24 @@ export function DailyLog({ sessions, onAddSession, onDeleteSession, dailyTotal }
             onChange={e => setSubject(e.target.value)}
             className="col-span-2 bg-muted/50 border-border"
           />
-          <Input
-            type="time"
-            value={startTime}
-            onChange={e => setStartTime(e.target.value)}
-            className="bg-muted/50 border-border"
-          />
-          <Input
-            type="time"
-            value={endTime}
-            onChange={e => setEndTime(e.target.value)}
-            className="bg-muted/50 border-border"
-          />
+          <div className="relative">
+            <Input
+              type="time"
+              value={startTime}
+              onChange={e => setStartTime(e.target.value)}
+              className="bg-muted/50 border-border"
+            />
+            <span className="absolute -top-2 left-2 text-[10px] text-muted-foreground bg-card px-1">Start</span>
+          </div>
+          <div className="relative">
+            <Input
+              type="time"
+              value={endTime}
+              onChange={e => setEndTime(e.target.value)}
+              className="bg-muted/50 border-border"
+            />
+            <span className="absolute -top-2 left-2 text-[10px] text-muted-foreground bg-card px-1">End</span>
+          </div>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <Select value={focusQuality} onValueChange={setFocusQuality}>
@@ -109,26 +160,29 @@ export function DailyLog({ sessions, onAddSession, onDeleteSession, dailyTotal }
             </SelectTrigger>
             <SelectContent>
               {[1, 2, 3, 4, 5].map(n => (
-                <SelectItem key={n} value={String(n)}>Focus: {'★'.repeat(n)}{'☆'.repeat(5 - n)}</SelectItem>
+                <SelectItem key={n} value={String(n)}>{'★'.repeat(n)}{'☆'.repeat(5 - n)}</SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <Input
-            type="number"
-            min="0"
-            placeholder="Distractions"
-            value={distractionCount}
-            onChange={e => setDistractionCount(e.target.value)}
-            className="bg-muted/50 border-border"
-          />
+          <div className="relative">
+            <Input
+              type="number"
+              min="0"
+              placeholder="0"
+              value={distractionCount}
+              onChange={e => setDistractionCount(e.target.value)}
+              className="bg-muted/50 border-border"
+            />
+            <span className="absolute -top-2 left-2 text-[10px] text-muted-foreground bg-card px-1">Distractions</span>
+          </div>
           <Select value={energyLevel} onValueChange={(v) => setEnergyLevel(v as EnergyLevel)}>
             <SelectTrigger className="bg-muted/50 border-border">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="high">⚡ High Energy</SelectItem>
-              <SelectItem value="medium">🔋 Medium Energy</SelectItem>
-              <SelectItem value="low">🪫 Low Energy</SelectItem>
+              <SelectItem value="high">⚡ High</SelectItem>
+              <SelectItem value="medium">🔋 Medium</SelectItem>
+              <SelectItem value="low">🪫 Low</SelectItem>
             </SelectContent>
           </Select>
           <Input
@@ -145,35 +199,46 @@ export function DailyLog({ sessions, onAddSession, onDeleteSession, dailyTotal }
 
       {/* Sessions List */}
       <div className="space-y-2">
-        {todaySessions.length === 0 ? (
-          <div className="glass-card p-8 text-center text-muted-foreground">
-            No sessions logged today. Start your deep work! 🎯
+        <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider px-1">Sessions</h3>
+        {daySessions.length === 0 ? (
+          <div className="glass-card p-10 text-center">
+            <p className="text-4xl mb-3">🎯</p>
+            <p className="text-muted-foreground">No sessions logged{isToday ? ' yet' : ''}.</p>
+            {isToday && <p className="text-sm text-muted-foreground mt-1">Start your deep work and log it above!</p>}
           </div>
         ) : (
-          todaySessions.map(session => (
-            <div key={session.id} className="glass-card p-4 flex items-center justify-between group">
-              <div className="flex-1 grid grid-cols-2 md:grid-cols-6 gap-2 items-center">
-                <span className="font-medium text-foreground">{session.subject}</span>
-                <span className="font-mono text-sm text-muted-foreground">
-                  {session.startTime} → {session.endTime}
-                </span>
-                <span className="font-mono text-primary font-semibold">
-                  {Math.floor(session.durationMinutes / 60)}h {session.durationMinutes % 60}m
-                </span>
-                <span className="text-sm">{'★'.repeat(session.focusQuality)}{'☆'.repeat(5 - session.focusQuality)}</span>
-                <span className={`text-sm ${getEnergyColor(session.energyLevel)}`}>
-                  {session.energyLevel === 'high' ? '⚡' : session.energyLevel === 'medium' ? '🔋' : '🪫'} {session.energyLevel}
-                </span>
-                <div className="flex justify-end">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onDeleteSession(session.id)}
-                    className="opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+          daySessions.map(session => (
+            <div key={session.id} className="glass-card p-4 group hover:border-primary/20 transition-all">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 space-y-1.5">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <span className="font-semibold text-foreground">{session.subject}</span>
+                    <span className="font-mono text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                      {session.startTime} → {session.endTime}
+                    </span>
+                    <span className="font-mono text-sm text-primary font-bold">
+                      {Math.floor(session.durationMinutes / 60)}h {session.durationMinutes % 60}m
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                    <span>{'★'.repeat(session.focusQuality)}{'☆'.repeat(5 - session.focusQuality)}</span>
+                    {session.distractionCount > 0 && (
+                      <span className="text-destructive">⚠ {session.distractionCount} distraction{session.distractionCount > 1 ? 's' : ''}</span>
+                    )}
+                    <span className={getEnergyColor(session.energyLevel)}>
+                      {session.energyLevel === 'high' ? '⚡' : session.energyLevel === 'medium' ? '🔋' : '🪫'} {session.energyLevel}
+                    </span>
+                    {session.notes && <span className="italic">"{session.notes}"</span>}
+                  </div>
                 </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onDeleteSession(session.id)}
+                  className="opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive shrink-0"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
               </div>
             </div>
           ))
