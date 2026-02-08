@@ -93,24 +93,28 @@ export function useStudyTracker() {
     return { totalHours, avgFocus, subjectMap, sessionCount: weekSessions.length };
   }, [sessions]);
 
+  // Initialize current week target on mount / when targets change
+  useEffect(() => {
+    const weekStart = format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd');
+    const existing = targets.find(t => t.weekStart === weekStart);
+    if (!existing) {
+      const prevWeekStart = format(startOfWeek(subWeeks(new Date(), 1), { weekStartsOn: 1 }), 'yyyy-MM-dd');
+      const prevTarget = targets.find(t => t.weekStart === prevWeekStart);
+      const baseTarget = prevTarget ? Math.min(prevTarget.targetHours + 0.5, 10) : 5;
+      setTargets(prev => [...prev, {
+        weekStart,
+        targetHours: Math.round(baseTarget * 10) / 10,
+        actualHours: 0,
+        met: false,
+      }]);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const getCurrentWeekTarget = useCallback((): WeeklyTarget => {
     const weekStart = format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd');
     const existing = targets.find(t => t.weekStart === weekStart);
     if (existing) return existing;
-
-    // Calculate next target based on previous week
-    const prevWeekStart = format(startOfWeek(subWeeks(new Date(), 1), { weekStartsOn: 1 }), 'yyyy-MM-dd');
-    const prevTarget = targets.find(t => t.weekStart === prevWeekStart);
-    const baseTarget = prevTarget ? Math.min(prevTarget.targetHours + 0.5, 10) : 5;
-
-    const newTarget: WeeklyTarget = {
-      weekStart,
-      targetHours: Math.round(baseTarget * 10) / 10,
-      actualHours: 0,
-      met: false,
-    };
-    setTargets(prev => [...prev, newTarget]);
-    return newTarget;
+    return { weekStart, targetHours: 5, actualHours: 0, met: false };
   }, [targets]);
 
   const getHabitStreaks = useCallback(() => {

@@ -12,11 +12,12 @@ const TABS: { key: TabType; label: string; icon: React.ReactNode }[] = [
   { key: 'daily', label: 'Daily Log', icon: <BookOpen className="w-4 h-4" /> },
   { key: 'habits', label: 'Habits', icon: <CheckSquare className="w-4 h-4" /> },
   { key: 'dashboard', label: 'Dashboard', icon: <BarChart3 className="w-4 h-4" /> },
-  { key: 'progression', label: 'Progression', icon: <Target className="w-4 h-4" /> },
+  { key: 'progression', label: 'Goals', icon: <Target className="w-4 h-4" /> },
 ];
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<TabType>('daily');
+  const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const tracker = useStudyTracker();
   const today = format(new Date(), 'yyyy-MM-dd');
   const dailyTotal = tracker.getDailyTotalHours(today);
@@ -24,27 +25,29 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border/50 backdrop-blur-sm sticky top-0 z-10 bg-background/80">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+      <header className="border-b border-border/50 backdrop-blur-sm sticky top-0 z-10 bg-background/90">
+        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-lg bg-primary/15 flex items-center justify-center">
               <Flame className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h1 className="text-lg font-bold tracking-tight">Deep Work Tracker</h1>
-              <p className="text-xs text-muted-foreground">Real study hours only</p>
+              <h1 className="text-lg font-bold tracking-tight">Deep Work</h1>
+              <p className="text-[11px] text-muted-foreground leading-tight">Real hours only</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 glass-card px-3 py-2">
-            <span className="text-xs text-muted-foreground">Today:</span>
-            <span className="font-mono font-bold text-primary">{dailyTotal}h</span>
+          <div className="flex items-center gap-3">
+            <div className="glass-card px-3 py-1.5 flex items-center gap-2">
+              <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Today</span>
+              <span className="font-mono font-bold text-primary text-lg">{dailyTotal}h</span>
+            </div>
           </div>
         </div>
       </header>
 
       {/* Tab Navigation */}
-      <nav className="border-b border-border/30">
-        <div className="max-w-4xl mx-auto px-4 flex gap-1">
+      <nav className="border-b border-border/30 bg-background/50 backdrop-blur-sm sticky top-[61px] z-10">
+        <div className="max-w-4xl mx-auto px-4 flex">
           {TABS.map(tab => (
             <button
               key={tab.key}
@@ -67,9 +70,11 @@ const Index = () => {
         {activeTab === 'daily' && (
           <DailyLog
             sessions={tracker.sessions}
+            selectedDate={selectedDate}
+            onDateChange={setSelectedDate}
             onAddSession={tracker.addSession}
             onDeleteSession={tracker.deleteSession}
-            dailyTotal={dailyTotal}
+            dailyTotal={tracker.getDailyTotalHours(selectedDate)}
           />
         )}
         {activeTab === 'habits' && (
