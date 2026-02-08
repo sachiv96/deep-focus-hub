@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { format, addDays, subDays } from 'date-fns';
+import { format, addDays, subDays, parseISO } from 'date-fns';
 import { Plus, Trash2, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { StudySession, EnergyLevel } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -47,7 +47,7 @@ export function DailyLog({ sessions, selectedDate, onDateChange, onAddSession, o
   };
 
   const navigateDate = (dir: number) => {
-    const d = dir > 0 ? addDays(new Date(selectedDate), 1) : subDays(new Date(selectedDate), 1);
+    const d = dir > 0 ? addDays(parseISO(selectedDate), 1) : subDays(parseISO(selectedDate), 1);
     onDateChange(format(d, 'yyyy-MM-dd'));
   };
 
@@ -72,7 +72,7 @@ export function DailyLog({ sessions, selectedDate, onDateChange, onAddSession, o
           <Calendar className="w-4 h-4 text-primary" />
           <div className="text-center">
             <h2 className="font-semibold">
-              {isToday ? 'Today' : format(new Date(selectedDate), 'EEEE')} — {format(new Date(selectedDate), 'MMM d, yyyy')}
+              {isToday ? 'Today' : format(parseISO(selectedDate), 'EEEE')} — {format(parseISO(selectedDate), 'MMM d, yyyy')}
             </h2>
           </div>
           {!isToday && (
