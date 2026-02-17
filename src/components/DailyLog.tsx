@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { format, addDays, subDays, parseISO } from 'date-fns';
 import { Plus, Trash2, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { StudySession, EnergyLevel } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -62,10 +63,14 @@ export function DailyLog({ sessions, selectedDate, onDateChange, onAddSession, o
   const totalMinutes = daySessions.reduce((s, sess) => s + sess.durationMinutes, 0);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Date Navigation */}
-      <div className="glass-card p-4 flex items-center justify-between">
-        <button onClick={() => navigateDate(-1)} className="p-2 rounded-lg hover:bg-muted transition-colors">
+      <motion.div
+        className="glass-card p-4 flex items-center justify-between"
+        whileHover={{ scale: 1.005 }}
+        transition={{ type: 'spring', stiffness: 400 }}
+      >
+        <button onClick={() => navigateDate(-1)} className="p-2 rounded-lg hover:bg-muted/80 transition-colors">
           <ChevronLeft className="w-5 h-5 text-muted-foreground" />
         </button>
         <div className="flex items-center gap-3">
@@ -84,13 +89,18 @@ export function DailyLog({ sessions, selectedDate, onDateChange, onAddSession, o
             </button>
           )}
         </div>
-        <button onClick={() => navigateDate(1)} className="p-2 rounded-lg hover:bg-muted transition-colors">
+        <button onClick={() => navigateDate(1)} className="p-2 rounded-lg hover:bg-muted/80 transition-colors">
           <ChevronRight className="w-5 h-5 text-muted-foreground" />
         </button>
-      </div>
+      </motion.div>
 
       {/* Today's Summary */}
-      <div className="glass-card p-6">
+      <motion.div
+        className="glass-card p-6"
+        initial={{ opacity: 0, scale: 0.98 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.1 }}
+      >
         <div className="flex items-center justify-between mb-2">
           <div>
             <p className="text-sm text-muted-foreground">{daySessions.length} session{daySessions.length !== 1 ? 's' : ''} logged</p>
@@ -98,17 +108,19 @@ export function DailyLog({ sessions, selectedDate, onDateChange, onAddSession, o
           <div className="flex items-center gap-3">
             <div className="text-right">
               <span className="text-xs text-muted-foreground block">Real Study</span>
-              <span className={`stat-value text-2xl ${dailyTotal >= 8 ? 'text-success' : dailyTotal >= 5 ? 'text-primary' : dailyTotal > 0 ? 'text-warning' : 'text-muted-foreground'}`}>
+              <span className={`stat-value text-2xl ${dailyTotal >= 8 ? 'text-success' : dailyTotal >= 5 ? 'text-gradient-primary' : dailyTotal > 0 ? 'text-warning' : 'text-muted-foreground'}`}>
                 {Math.floor(totalMinutes / 60)}h {totalMinutes % 60}m
               </span>
             </div>
           </div>
         </div>
-        <div className="w-full bg-muted rounded-full h-2.5 mt-3">
-          <div
-            className="h-2.5 rounded-full transition-all duration-700 ease-out"
+        <div className="w-full bg-muted/60 rounded-full h-2.5 mt-3 overflow-hidden">
+          <motion.div
+            className="h-2.5 rounded-full"
+            initial={{ width: 0 }}
+            animate={{ width: `${Math.min((dailyTotal / 10) * 100, 100)}%` }}
+            transition={{ duration: 1, ease: 'easeOut' }}
             style={{
-              width: `${Math.min((dailyTotal / 10) * 100, 100)}%`,
               background: dailyTotal >= 8
                 ? 'hsl(var(--success))'
                 : dailyTotal >= 5
@@ -122,24 +134,29 @@ export function DailyLog({ sessions, selectedDate, onDateChange, onAddSession, o
           <span className="text-primary font-medium">Target: 5-10h</span>
           <span>10h</span>
         </div>
-      </div>
+      </motion.div>
 
       {/* Add Session Form */}
-      <div className="glass-card p-6 space-y-4">
+      <motion.div
+        className="glass-card p-6 space-y-4"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+      >
         <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Log Deep Work Session</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <Input
             placeholder="Subject / Task"
             value={subject}
             onChange={e => setSubject(e.target.value)}
-            className="col-span-2 bg-muted/50 border-border"
+            className="col-span-2 bg-muted/30 border-border/50"
           />
           <div className="relative">
             <Input
               type="time"
               value={startTime}
               onChange={e => setStartTime(e.target.value)}
-              className="bg-muted/50 border-border"
+              className="bg-muted/30 border-border/50"
             />
             <span className="absolute -top-2 left-2 text-[10px] text-muted-foreground bg-card px-1">Start</span>
           </div>
@@ -148,14 +165,14 @@ export function DailyLog({ sessions, selectedDate, onDateChange, onAddSession, o
               type="time"
               value={endTime}
               onChange={e => setEndTime(e.target.value)}
-              className="bg-muted/50 border-border"
+              className="bg-muted/30 border-border/50"
             />
             <span className="absolute -top-2 left-2 text-[10px] text-muted-foreground bg-card px-1">End</span>
           </div>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <Select value={focusQuality} onValueChange={setFocusQuality}>
-            <SelectTrigger className="bg-muted/50 border-border">
+            <SelectTrigger className="bg-muted/30 border-border/50">
               <SelectValue placeholder="Focus (1-5)" />
             </SelectTrigger>
             <SelectContent>
@@ -171,12 +188,12 @@ export function DailyLog({ sessions, selectedDate, onDateChange, onAddSession, o
               placeholder="0"
               value={distractionCount}
               onChange={e => setDistractionCount(e.target.value)}
-              className="bg-muted/50 border-border"
+              className="bg-muted/30 border-border/50"
             />
             <span className="absolute -top-2 left-2 text-[10px] text-muted-foreground bg-card px-1">Distractions</span>
           </div>
           <Select value={energyLevel} onValueChange={(v) => setEnergyLevel(v as EnergyLevel)}>
-            <SelectTrigger className="bg-muted/50 border-border">
+            <SelectTrigger className="bg-muted/30 border-border/50">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -189,59 +206,72 @@ export function DailyLog({ sessions, selectedDate, onDateChange, onAddSession, o
             placeholder="Notes (optional)"
             value={notes}
             onChange={e => setNotes(e.target.value)}
-            className="bg-muted/50 border-border"
+            className="bg-muted/30 border-border/50"
           />
         </div>
         <Button onClick={handleAdd} className="w-full" disabled={!subject || !startTime || !endTime}>
           <Plus className="w-4 h-4 mr-2" /> Log Session
         </Button>
-      </div>
+      </motion.div>
 
       {/* Sessions List */}
       <div className="space-y-2">
         <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider px-1">Sessions</h3>
         {daySessions.length === 0 ? (
-          <div className="glass-card p-10 text-center">
+          <motion.div
+            className="glass-card p-10 text-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
             <p className="text-4xl mb-3">🎯</p>
             <p className="text-muted-foreground">No sessions logged{isToday ? ' yet' : ''}.</p>
             {isToday && <p className="text-sm text-muted-foreground mt-1">Start your deep work and log it above!</p>}
-          </div>
+          </motion.div>
         ) : (
-          daySessions.map(session => (
-            <div key={session.id} className="glass-card p-4 group hover:border-primary/20 transition-all">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 space-y-1.5">
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <span className="font-semibold text-foreground">{session.subject}</span>
-                    <span className="font-mono text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
-                      {session.startTime} → {session.endTime}
-                    </span>
-                    <span className="font-mono text-sm text-primary font-bold">
-                      {Math.floor(session.durationMinutes / 60)}h {session.durationMinutes % 60}m
-                    </span>
+          <AnimatePresence>
+            {daySessions.map((session, i) => (
+              <motion.div
+                key={session.id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20, height: 0 }}
+                transition={{ delay: i * 0.05 }}
+                className="glass-card-hover p-4 group"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 space-y-1.5">
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <span className="font-semibold text-foreground">{session.subject}</span>
+                      <span className="font-mono text-xs text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-md">
+                        {session.startTime} → {session.endTime}
+                      </span>
+                      <span className="font-mono text-sm text-primary font-bold">
+                        {Math.floor(session.durationMinutes / 60)}h {session.durationMinutes % 60}m
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                      <span>{'★'.repeat(session.focusQuality)}{'☆'.repeat(5 - session.focusQuality)}</span>
+                      {session.distractionCount > 0 && (
+                        <span className="text-destructive">⚠ {session.distractionCount} distraction{session.distractionCount > 1 ? 's' : ''}</span>
+                      )}
+                      <span className={getEnergyColor(session.energyLevel)}>
+                        {session.energyLevel === 'high' ? '⚡' : session.energyLevel === 'medium' ? '🔋' : '🪫'} {session.energyLevel}
+                      </span>
+                      {session.notes && <span className="italic">"{session.notes}"</span>}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                    <span>{'★'.repeat(session.focusQuality)}{'☆'.repeat(5 - session.focusQuality)}</span>
-                    {session.distractionCount > 0 && (
-                      <span className="text-destructive">⚠ {session.distractionCount} distraction{session.distractionCount > 1 ? 's' : ''}</span>
-                    )}
-                    <span className={getEnergyColor(session.energyLevel)}>
-                      {session.energyLevel === 'high' ? '⚡' : session.energyLevel === 'medium' ? '🔋' : '🪫'} {session.energyLevel}
-                    </span>
-                    {session.notes && <span className="italic">"{session.notes}"</span>}
-                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onDeleteSession(session.id)}
+                    className="opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive shrink-0 transition-opacity"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onDeleteSession(session.id)}
-                  className="opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive shrink-0"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          ))
+              </motion.div>
+            ))}
+          </AnimatePresence>
         )}
       </div>
     </div>
