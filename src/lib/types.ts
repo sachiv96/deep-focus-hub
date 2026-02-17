@@ -29,4 +29,4 @@ export interface WeeklyTarget {
 }
 
 export type EnergyLevel = 'low' | 'medium' | 'high';
-export type TabType = 'daily' | 'habits' | 'dashboard' | 'progression';
+export type TabType = 'daily' | 'habits' | 'dashboard' | 'progression' | 'timer';

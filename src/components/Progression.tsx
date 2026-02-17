@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion';
 import { useStudyTracker } from '@/hooks/useStudyTracker';
 import { Target, TrendingUp, CheckCircle2, XCircle } from 'lucide-react';
 
@@ -15,9 +16,13 @@ export function Progression({ tracker }: ProgressionProps) {
   const isOnTrack = progressPercent >= 50;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Current Target */}
-      <div className="glass-card p-6 glow-primary">
+      <motion.div
+        className="glass-card p-6 glow-primary"
+        initial={{ opacity: 0, scale: 0.97 }}
+        animate={{ opacity: 1, scale: 1 }}
+      >
         <div className="flex items-center gap-3 mb-4">
           <Target className="w-6 h-6 text-primary" />
           <h2 className="text-lg font-semibold">Weekly Target</h2>
@@ -25,7 +30,7 @@ export function Progression({ tracker }: ProgressionProps) {
         <div className="grid grid-cols-3 gap-6 mb-4">
           <div className="text-center">
             <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Target / Day</p>
-            <p className="stat-value text-primary">{currentTarget.targetHours}h</p>
+            <p className="stat-value text-gradient-primary">{currentTarget.targetHours}h</p>
           </div>
           <div className="text-center">
             <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Achieved</p>
@@ -33,18 +38,25 @@ export function Progression({ tracker }: ProgressionProps) {
           </div>
           <div className="text-center">
             <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Status</p>
-            {isOnTrack ? (
-              <CheckCircle2 className="w-8 h-8 text-success mx-auto" />
-            ) : (
-              <XCircle className="w-8 h-8 text-destructive mx-auto" />
-            )}
+            <motion.div
+              animate={{ scale: [1, 1.1, 1] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            >
+              {isOnTrack ? (
+                <CheckCircle2 className="w-8 h-8 text-success mx-auto" />
+              ) : (
+                <XCircle className="w-8 h-8 text-destructive mx-auto" />
+              )}
+            </motion.div>
           </div>
         </div>
-        <div className="w-full bg-muted rounded-full h-3">
-          <div
-            className="h-3 rounded-full transition-all duration-700"
+        <div className="w-full bg-muted/60 rounded-full h-3 overflow-hidden">
+          <motion.div
+            className="h-3 rounded-full"
+            initial={{ width: 0 }}
+            animate={{ width: `${progressPercent}%` }}
+            transition={{ duration: 1, ease: 'easeOut' }}
             style={{
-              width: `${progressPercent}%`,
               background: progressPercent >= 80
                 ? 'hsl(var(--success))'
                 : progressPercent >= 50
@@ -54,26 +66,39 @@ export function Progression({ tracker }: ProgressionProps) {
           />
         </div>
         <p className="text-sm text-muted-foreground mt-2 text-center">{progressPercent}% of weekly goal</p>
-      </div>
+      </motion.div>
 
       {/* Daily Breakdown */}
-      <div className="glass-card p-6">
+      <motion.div
+        className="glass-card p-6"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15 }}
+      >
         <div className="flex items-center gap-3 mb-4">
           <TrendingUp className="w-5 h-5 text-primary" />
           <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">This Week's Breakdown</h3>
         </div>
         <div className="space-y-3">
-          {last7Days.map(day => {
+          {last7Days.map((day, i) => {
             const target = currentTarget.targetHours;
             const percent = Math.min(100, Math.round((day.hours / target) * 100));
             return (
-              <div key={day.fullDate} className="flex items-center gap-3">
+              <motion.div
+                key={day.fullDate}
+                className="flex items-center gap-3"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 + i * 0.05 }}
+              >
                 <span className="w-10 text-sm font-mono text-muted-foreground">{day.date}</span>
-                <div className="flex-1 bg-muted rounded-full h-6 relative overflow-hidden">
-                  <div
-                    className="h-6 rounded-full transition-all duration-500 flex items-center justify-end pr-2"
+                <div className="flex-1 bg-muted/40 rounded-full h-6 relative overflow-hidden">
+                  <motion.div
+                    className="h-6 rounded-full flex items-center justify-end pr-2"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${Math.max(percent, 2)}%` }}
+                    transition={{ duration: 0.8, delay: 0.3 + i * 0.05, ease: 'easeOut' }}
                     style={{
-                      width: `${Math.max(percent, 2)}%`,
                       background: percent >= 100
                         ? 'hsl(var(--success))'
                         : percent >= 60
@@ -86,17 +111,22 @@ export function Progression({ tracker }: ProgressionProps) {
                     {day.hours > 0 && (
                       <span className="text-xs font-mono font-semibold text-primary-foreground">{day.hours}h</span>
                     )}
-                  </div>
+                  </motion.div>
                 </div>
                 <span className="w-16 text-right text-xs text-muted-foreground">{percent}%</span>
-              </div>
+              </motion.div>
             );
           })}
         </div>
-      </div>
+      </motion.div>
 
       {/* Progression Info */}
-      <div className="glass-card p-6">
+      <motion.div
+        className="glass-card p-6"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
         <h3 className="font-semibold mb-3 text-sm text-muted-foreground uppercase tracking-wider">How Progression Works</h3>
         <div className="space-y-2 text-sm text-muted-foreground">
           <p>• Your target starts at <span className="text-primary font-semibold">5 hours/day</span> and increases gradually.</p>
@@ -109,7 +139,7 @@ export function Progression({ tracker }: ProgressionProps) {
             </p>
           )}
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
